@@ -1,21 +1,30 @@
-name: Go
+name: Build and Release
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    tags:
+      - 'v*'
 
 jobs:
   build:
     runs-on: windows-latest
+    
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.26'
-
-    - name: Build
-      run: go build -v ./...
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.26'  # Adjust to your Go version
+      
+      - name: Build Windows executable
+        run: |
+          go build -o NetworkScanner.exe -v .
+        shell: pwsh
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: NetworkScanner.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
