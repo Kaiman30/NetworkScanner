@@ -19,7 +19,7 @@ jobs:
       
       - name: Build Windows executable
         run: |
-          go build -o NetworkScanner.exe -v .
+          go build -o NetworkScanner.exe -v ./cmd/checker
         shell: pwsh
       
       - name: Create Release
