@@ -17,8 +17,8 @@ func main() {
 	// Скрываем окно терминала
 	windows.HideConsole()
 
-	results := checker.RunAllChecks()
+	results, fakerResult := checker.RunAllChecks()
 
 	// Запус сервера с результатами
-	web.StartServer(results)
+	web.StartServer(results, fakerResult)
 }
