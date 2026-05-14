@@ -7,7 +7,7 @@ import (
 )
 
 // RunAllChecks запускает все проверки
-func RunAllChecks() *models.Results {
+func RunAllChecks() (*models.Results, *FakerCheckResult) {
 	results := models.NewResults()
 
 	ctx := &CheckContext{
@@ -38,7 +38,11 @@ func RunAllChecks() *models.Results {
 		}
 	}
 
-	return results
+	// Проверка на фейкеров
+	fmt.Println("\n[Faker Check] Анализ сети на предмет фейкеров...")
+	fakerResult := CheckFaker(ctx)
+
+	return results, fakerResult
 }
 
 type CheckContext struct {
