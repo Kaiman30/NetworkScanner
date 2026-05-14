@@ -9,7 +9,6 @@ import (
 	"runtime"
 
 	"github.com/Kaiman30/NetworkChecker/internal/models"
-	"github.com/Kaiman30/NetworkChecker/internal/ui"
 )
 
 // StartServer создает HTML файл и открывает его в браузере
@@ -21,7 +20,7 @@ func StartServer(results *models.Results) {
 	// Генерируем JSON данные
 	data, err := json.MarshalIndent(results, "", "  ")
 	if err != nil {
-		ui.ShowErrorMessage("Ошибка", "Не удалось сгенерировать отчет: "+err.Error())
+		fmt.Printf("Error: Не удалось сгенерировать отчет: %v\n", err)
 		return
 	}
 
@@ -36,7 +35,7 @@ func StartServer(results *models.Results) {
 	// Записываем файл
 	err = os.WriteFile(htmlFile, []byte(htmlContent), 0644)
 	if err != nil {
-		ui.ShowErrorMessage("Ошибка", "Не удалось сохранить отчет: "+err.Error())
+		fmt.Printf("Error: Не удалось сохранить отчет: %v\n", err)
 		return
 	}
 

@@ -17,9 +17,6 @@ func main() {
 	// Скрываем окно терминала
 	windows.HideConsole()
 
-	// Стартовое сообщение
-	ui.ShowInfoMessage("Network Settings Checker", "Начало анализа...\nОтчет откроется в браузере")
-
 	results := checker.RunAllChecks()
 
 	// Запус сервера с результатами
