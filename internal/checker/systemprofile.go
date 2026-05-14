@@ -6,30 +6,48 @@ import (
 	"github.com/Kaiman30/NetworkChecker/pkg/windows"
 )
 
-// CheckSystemProfile проверяет системный профиль (троттлинг)
+// defaultSystemProfileValues содержит приемлемые значения по умолчанию для параметров системного профиля
+var defaultSystemProfileValues = map[string][]uint64{
+	"NetworkThrottlingIndex": {0x0000000a, 0xffffff},
+	"SystemResponsiveness":   {0x00000014},
+}
+
 func CheckSystemProfile(ctx *CheckContext) {
 	sysProfilePath := `SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile`
 
-	// NetworkThrottlingIndex
-	val, err := windows.GetRegistryUint64(sysProfilePath, "NetworkThrottlingIndex")
-	if err == nil {
-		ctx.Results.AddFailed("NetworkThrottlingIndex = " + formatThrottleValue(val))
-	} else {
-		ctx.Results.AddPassed("NetworkThrottlingIndex")
+	checks := []string{
+		"NetworkThrottlingIndex",
+		"SystemResponsiveness",
 	}
 
-	// SystemResponsiveness
-	val, err = windows.GetRegistryUint64(sysProfilePath, "SystemResponsiveness")
-	if err == nil {
-		ctx.Results.AddFailed("SystemResponsiveness = " + strconv.FormatUint(val, 10))
-	} else {
-		ctx.Results.AddPassed("SystemResponsiveness")
+	for _, checkName := range checks {
+		val, err := windows.GetRegistryUint64(sysProfilePath, checkName)
+
+		if err == nil {
+			// Ключ существует - проверяем, является ли значение приемлемым по умолчанию
+			if isDefaultSystemProfileValue(checkName, val) {
+				ctx.Results.AddPassed(checkName)
+			} else {
+				// Значение измененное - добавляем в failed
+				ctx.Results.AddFailed(checkName + " = " + strconv.FormatUint(val, 10))
+			}
+		} else {
+			// Ключа нет - настройки нет
+			ctx.Results.AddPassed(checkName)
+		}
 	}
 }
 
-func formatThrottleValue(val uint64) string {
-	if val == 0xFFFFFFFF {
-		return "отключен"
+// isDefaultSystemProfileValue проверяет, является ли значение приемлемым по умолчанию
+func isDefaultSystemProfileValue(paramName string, value uint64) bool {
+	if defaults, exists := defaultSystemProfileValues[paramName]; exists {
+		for _, defaultVal := range defaults {
+			if value == defaultVal {
+				return true
+			}
+		}
+		return false
 	}
-	return strconv.FormatUint(val, 10)
+	// Если параметр не в списке дефолтных значений, то любое значение считается измененным
+	return false
 }
