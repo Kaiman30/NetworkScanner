@@ -35,7 +35,7 @@ func CheckTCPIPParams(ctx *CheckContext) {
 
 		if err == nil {
 			// Ключ существует - проверяем, является ли значение приемлемым по умолчанию
-			if isDefaultValue(checkName, val) {
+			if isDefaultTcpIPValue(checkName, val) {
 				ctx.Results.AddPassed(checkName)
 			} else {
 				// Значение измененное - добавляем в failed
@@ -48,8 +48,8 @@ func CheckTCPIPParams(ctx *CheckContext) {
 	}
 }
 
-// isDefaultValue проверяет, является ли значение приемлемым по умолчанию
-func isDefaultValue(paramName string, value uint64) bool {
+// isDefaultTcpIPValue проверяет, является ли значение приемлемым по умолчанию
+func isDefaultTcpIPValue(paramName string, value uint64) bool {
 	if defaults, exists := defaultTCPIPValues[paramName]; exists {
 		for _, defaultVal := range defaults {
 			if value == defaultVal {

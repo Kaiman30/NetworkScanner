@@ -9,6 +9,8 @@ import (
 	"github.com/Kaiman30/NetworkChecker/pkg/windows"
 )
 
+var runCommand = windows.RunCommand
+
 type FakerCheckResult struct {
 	CurrentConnection    *ConnectionInfo
 	HostedNetworkActive  bool
@@ -100,7 +102,7 @@ func CheckFaker(ctx *CheckContext) *FakerCheckResult {
 }
 
 func getCurrentConnection() *ConnectionInfo {
-	output, err := windows.RunCommand("netsh", "wlan", "show", "interfaces")
+	output, err := runCommand("netsh", "wlan", "show", "interfaces")
 	if err != nil {
 		return nil
 	}
@@ -113,49 +115,42 @@ func getCurrentConnection() *ConnectionInfo {
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 
-		if strings.Contains(line, "SSID") && !strings.Contains(line, ":") {
+		if strings.Contains(line, "SSID") && !strings.HasPrefix(line, "SSID") && !strings.Contains(line, "SSID") {
 			continue
 		}
-		if idx := strings.Index(line, "SSID"); idx != -1 {
-			parts := strings.Split(line, ":")
-			if len(parts) >= 2 {
-				conn.SSID = strings.TrimSpace(parts[1])
+		if strings.HasPrefix(strings.TrimSpace(line), "SSID") {
+			if colonIdx := strings.Index(line, ":"); colonIdx != -1 {
+				conn.SSID = strings.TrimSpace(line[colonIdx+1:])
 			}
 		}
-		if idx := strings.Index(line, "State"); idx != -1 {
-			parts := strings.Split(line, ":")
-			if len(parts) >= 2 {
-				conn.State = strings.TrimSpace(parts[1])
+		if strings.HasPrefix(strings.TrimSpace(line), "State") {
+			if colonIdx := strings.Index(line, ":"); colonIdx != -1 {
+				conn.State = strings.TrimSpace(line[colonIdx+1:])
 			}
 		}
-		if idx := strings.Index(line, "BSSID"); idx != -1 {
-			parts := strings.Split(line, ":")
-			if len(parts) >= 2 {
-				conn.BSSID = strings.TrimSpace(parts[1])
+		if strings.HasPrefix(strings.TrimSpace(line), "BSSID") {
+			if colonIdx := strings.Index(line, ":"); colonIdx != -1 {
+				conn.BSSID = strings.TrimSpace(line[colonIdx+1:])
 			}
 		}
-		if idx := strings.Index(line, "Network type"); idx != -1 {
-			parts := strings.Split(line, ":")
-			if len(parts) >= 2 {
-				conn.NetworkType = strings.TrimSpace(parts[1])
+		if strings.HasPrefix(strings.TrimSpace(line), "Network type") {
+			if colonIdx := strings.Index(line, ":"); colonIdx != -1 {
+				conn.NetworkType = strings.TrimSpace(line[colonIdx+1:])
 			}
 		}
-		if idx := strings.Index(line, "Radio type"); idx != -1 {
-			parts := strings.Split(line, ":")
-			if len(parts) >= 2 {
-				conn.RadioType = strings.TrimSpace(parts[1])
+		if strings.HasPrefix(strings.TrimSpace(line), "Radio type") {
+			if colonIdx := strings.Index(line, ":"); colonIdx != -1 {
+				conn.RadioType = strings.TrimSpace(line[colonIdx+1:])
 			}
 		}
-		if idx := strings.Index(line, "Channel"); idx != -1 {
-			parts := strings.Split(line, ":")
-			if len(parts) >= 2 {
-				conn.Channel = strings.TrimSpace(parts[1])
+		if strings.HasPrefix(strings.TrimSpace(line), "Channel") {
+			if colonIdx := strings.Index(line, ":"); colonIdx != -1 {
+				conn.Channel = strings.TrimSpace(line[colonIdx+1:])
 			}
 		}
-		if idx := strings.Index(line, "Signal"); idx != -1 {
-			parts := strings.Split(line, ":")
-			if len(parts) >= 2 {
-				conn.Signal = strings.TrimSpace(parts[1])
+		if strings.HasPrefix(strings.TrimSpace(line), "Signal") {
+			if colonIdx := strings.Index(line, ":"); colonIdx != -1 {
+				conn.Signal = strings.TrimSpace(line[colonIdx+1:])
 			}
 		}
 	}
@@ -260,7 +255,7 @@ func detectHotspotIndicators(conn *ConnectionInfo) (bool, []string) {
 
 func isMobileHotspotRunning() bool {
 	// Проверяем статус сервиса icssvc (Mobile Hotspot)
-	output, err := windows.RunCommand("sc", "query", "icssvc")
+	output, err := runCommand("sc", "query", "icssvc")
 	if err != nil {
 		return false
 	}
@@ -269,7 +264,7 @@ func isMobileHotspotRunning() bool {
 }
 
 func getHostedNetworkStatus() (bool, string, int) {
-	output, err := windows.RunCommand("netsh", "wlan", "show", "hostednetwork")
+	output, err := runCommand("netsh", "wlan", "show", "hostednetwork")
 	if err != nil {
 		return false, "N/A", 0
 	}
@@ -307,7 +302,7 @@ func getHostedNetworkStatus() (bool, string, int) {
 func getHotspotProfiles() []string {
 	var profiles []string
 
-	output, err := windows.RunCommand("netsh", "wlan", "show", "profiles")
+	output, err := runCommand("netsh", "wlan", "show", "profiles")
 	if err != nil {
 		return profiles
 	}
@@ -343,7 +338,7 @@ func getVirtualAdapters() []AdapterInfo {
 
 	// Используем WMI для получения информации о сетевых адаптерах
 	// Для простоты, ищем через netsh
-	output, err := windows.RunCommand("netsh", "interface", "show", "interface")
+	output, err := runCommand("netsh", "interface", "show", "interface")
 	if err != nil {
 		return adapters
 	}
@@ -369,7 +364,7 @@ func getVirtualAdapters() []AdapterInfo {
 func getConnectedDevices() []DeviceInfo {
 	var devices []DeviceInfo
 
-	output, err := windows.RunCommand("arp", "-a")
+	output, err := runCommand("arp", "-a")
 	if err != nil {
 		return devices
 	}
@@ -399,7 +394,7 @@ func getConnectedDevices() []DeviceInfo {
 }
 
 func getDefaultGateway() string {
-	output, err := windows.RunCommand("ipconfig")
+	output, err := runCommand("ipconfig")
 	if err != nil {
 		return ""
 	}
@@ -425,7 +420,7 @@ func getDefaultGateway() string {
 func getDNSServers() []string {
 	var dnsServers []string
 
-	output, err := windows.RunCommand("ipconfig", "/all")
+	output, err := runCommand("ipconfig", "/all")
 	if err != nil {
 		return dnsServers
 	}
